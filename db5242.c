@@ -100,19 +100,20 @@ inline int64_t low_bin_nb_arithmetic(int64_t* data, int64_t size, int64_t target
 
   while(left<right) {
 
-    /* YOUR CODE HERE */
+  /* YOUR CODE HERE */
     int64_t mid = (left + right) / 2;
 
-        // Calculate whether the target is less than or equal to data[mid]
-        // Comparison result is 1 if true, 0 if false
-        int64_t is_ge = (data[mid] >= target);
+    // Calculate whether the target is less than or equal to data[mid]
+    // Comparison result is 1 if true, 0 if false
+    int64_t is_ge = (data[mid] >= target);
 
-        // Update right or left based on is_ge without branching
-        right = right * is_ge + mid * (1 - is_ge);  // If is_ge: right = mid; else: right = right
-        left = left * (1 - is_ge) + (mid + 1) * is_ge; // If is_ge: left = left; else: left = mid + 1
+    // Update right or left based on is_ge without branching
 
+    right = mid * is_ge + right * (1 - is_ge);  // If is_ge: right = mid; else: right = right
+    left = left * is_ge + (mid + 1) * (1 - is_ge);  // If is_ge: left = left; else: left = mid + 1
   }
-  return right;
+	int64_t is_greater = (data[right] >= target);
+  return right * (is_greater) + (-1) * (1-is_greater);
 }
 
 inline int64_t low_bin_nb_mask(int64_t* data, int64_t size, int64_t target)
