@@ -95,25 +95,25 @@ inline int64_t low_bin_nb_arithmetic(int64_t* data, int64_t size, int64_t target
      (c) If the search key is bigger than all keys, it returns size.
   */
   int64_t left=0;
-  int64_t right=size;
+  int64_t right=size-1;
   int64_t mid;
 
   while(left<right) {
 
   /* YOUR CODE HERE */
-    int64_t mid = (left + right) / 2;
+    mid = (left + right) / 2;
 
     // Calculate whether the target is less than or equal to data[mid]
     // Comparison result is 1 if true, 0 if false
-    int64_t is_ge = (data[mid] >= target);
+    int64_t is_ge = (data[mid] >= target); // Check if target is greater than or equal to data[mid]
 
     // Update right or left based on is_ge without branching
 
     right = mid * is_ge + right * (1 - is_ge);  // If is_ge: right = mid; else: right = right
     left = left * is_ge + (mid + 1) * (1 - is_ge);  // If is_ge: left = left; else: left = mid + 1
   }
-	int64_t is_greater = (data[right] >= target);
-  return right * (is_greater) + (-1) * (1-is_greater);
+	int64_t is_greater = (data[right] >= target); // Check if the value at 'right' is >= target to handle the final return value
+  return right * (is_greater) + (-1) * (1-is_greater); // Return right if is_greater, else return -1
 }
 
 inline int64_t low_bin_nb_mask(int64_t* data, int64_t size, int64_t target)
@@ -127,13 +127,21 @@ inline int64_t low_bin_nb_mask(int64_t* data, int64_t size, int64_t target)
      (c) If the search key is bigger than all keys, it returns size.
   */
   int64_t left=0;
-  int64_t right=size;
+  int64_t right=size-1;
 
 
   /* YOUR CODE HERE */
+  int64_t mid;
+  while (left < right)
+  {
+    mid = (left + right)>>1; // Bitwise shift to divide by 2
+    int64_t is_ge = -(data[mid] >= target); // Check if target is greater than or equal to data[mid]
 
-
-  return right;
+    right = (right & ~is_ge) | (mid & is_ge); // If is_ge: right = mid, else: right = right
+    left = (left & is_ge) | ((mid+1) & ~is_ge); // If is_ge: left = left, else: left = mid + 1
+  }
+	int64_t is_greater = -(data[right] >= target); // Check if the value at 'right' is >= target to handle the final return value
+    return (right & is_greater) | (-1 & (~is_greater)); // Return right if is_greater, else return -1
 }
 
 inline void low_bin_nb_4x(int64_t* data, int64_t size, int64_t* targets, int64_t* right)
