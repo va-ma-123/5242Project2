@@ -210,8 +210,8 @@ int64_t band_join(int64_t* inner, int64_t inner_size, int64_t* outer, int64_t ou
             upper_bounds[j] = outer[i+j] + bound + 1;
             // the +1 is because both linear search functions look for >= but we want > here
             // >= n+1 is the same as > n
-            left[j] = inner_size;
-            right[j] = inner_size;
+            left[j] = inner_size; // default to the end of the inner array 
+            right[j] = inner_size; 
         }
 
         if(batch_size == 4) {
@@ -241,6 +241,81 @@ int64_t band_join(int64_t* inner, int64_t inner_size, int64_t* outer, int64_t ou
     }
     return count;
 }
+
+int64_t band_join_simd(int64_t* inner, int64_t inner_size, int64_t* outer, int64_t outer_size, int64_t* inner_results, int64_t* outer_results, int64_t result_size, int64_t bound)
+{
+  /* In a band join we want matches within a range of values.  If p is the probe value from the outer table, then all
+     reccords in the inner table with a key in the range [p-bound,p+bound] inclusive should be part of the result.
+
+     Results are returned via two arrays. outer_results stores the index of the outer table row that matches, and
+     inner_results stores the index of the inner table row that matches.  result_size tells you the size of the
+     output array that has been allocated. You should make sure that you don't exceed this size.  If there are
+     more results than can fit in the result arrays, then return early with just a prefix of the results in the result
+     arrays. The return value of the function should be the number of output results.
+
+     To do the binary search, you could use the low_bin_nb_simd you just implemented to search for the lower bounds in parallel
+
+     Once you've found the lower bounds, do the following for each of the 4 search keys in turn:
+        scan along the sorted inner array, generating outputs for each match, and making sure not to exceed the output array bounds.
+
+     This inner scanning code does not have to use SIMD.
+  */
+
+    /* YOUR CODE HERE */
+    int64_t count = 0;
+    // declare these arrays with fixed size 4 outside of the loop
+    int64_t lower_bounds[4];
+    int64_t upper_bounds[4];
+    int64_t left[4];
+    int64_t right[4]; 
+    for (int64_t i=0; i < outer_size; i += 4) { // iterate 4 at a time
+        // get batch size, which is 4, or less if this is the last batch
+        int64_t batch_size = (outer_size - i > 4) ? 4 : (outer_size - i);
+        
+        for (int64_t j=0; j < batch_size; j++) {
+            lower_bounds[j] = outer[i+j] - bound;
+            upper_bounds[j] = outer[i+j] + bound + 1;
+            // the +1 is because both linear search functions look for >= but we want > here
+            // >= n+1 is the same as > n
+            left[j] = inner_size;
+            right[j] = inner_size;
+        }
+
+        if(batch_size == 4) {
+            // have to convert the bound arrays to vectors for the low_bin_nb_simd function
+            __m256i lower_vector = _mm256_loadu_si256((__m256i*)lower_bounds);
+            __m256i upper_vector = _mm256_loadu_si256((__m256i*)upper_bounds);
+            __m256i left_vector = _mm256_loadu_si256((__m256i*)left);
+            __m256i right_vector = _mm256_loadu_si256((__m256i*)right);
+
+            low_bin_nb_simd(inner, inner_size, lower_vector, &left_vector);
+            low_bin_nb_simd(inner, inner_size, upper_vector, &right_vector);
+
+            // store the results back in the left and right arrays
+            _mm256_storeu_si256((__m256i*)left, left_vector);
+            _mm256_storeu_si256((__m256i*)right, right_vector);
+        } else { 
+            // no need for vectors, same as band_join
+            for( int64_t j = 0; j < batch_size; j++) {
+                left[j] = low_bin_nb_mask(inner, inner_size, lower_bounds[j]);
+                right[j] = low_bin_nb_mask(inner, inner_size, upper_bounds[j]);
+            } 
+        }
+
+        for (int64_t j=0; j < batch_size; j++) {
+            for (int64_t k=left[j]; k < right[j]; k ++) {
+                if(count >= result_size){
+                    return count; // exit early
+                }
+                outer_results[count] = i + j;
+                inner_results[count] = k;
+                count++;
+            }
+        }
+    } 
+    return count;
+}
+
 
 // Main function to test low_bin_nb_arithmetic
 int main() {
@@ -280,12 +355,12 @@ int main() {
     }
 
     printf("Testing band_join:\n");
-    int64_t inner[] = {1, 2, 3, 4, 5};
-    int64_t outer[] = {6,7,8};
+    int64_t inner[] = {10, 25, 36, 49, 53};
+    int64_t outer[] = {20, 41, 60};
     int64_t inner_size = 5;
     int64_t outer_size = 3;
     int64_t result_size = 10;
-    int64_t bound = 1;
+    int64_t bound = 11;
 
     int64_t inner_results[10];
     int64_t outer_results[10];
@@ -297,5 +372,11 @@ int main() {
         printf("Outer index: %ld, Inner index: %ld\n", outer_results[i], inner_results[i]);
     }
 
+    printf("Testing band_join_simd:\n");
+    result_count = band_join_simd(inner, inner_size, outer, outer_size, inner_results, outer_results, result_size, bound);
+    printf("Results:\n");
+    for (int64_t i = 0; i < result_count; i++) {
+        printf("Outer index: %ld, Inner index: %ld\n", outer_results[i], inner_results[i]);
+    }
     return 0;
 }
