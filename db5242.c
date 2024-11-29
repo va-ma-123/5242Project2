@@ -241,35 +241,64 @@ inline void low_bin_nb_simd(int64_t* data, int64_t size, __m256i target, __m256i
  /* YOUR CODE HERE */
     // use the __m256i data type because intrinsics take these
     __m256i left = _mm256_setzero_si256(); // initialize left to 4 0's
+    __m256i right = *result; //  Use a copy of results as the right boundary
     __m256i tracker = _mm256_set1_epi64x(-1); // initialize tracker to 4 -1's (all 1s in binary), 0 for completed
 
     while (!_mm256_testz_si256(tracker, tracker)) { // testz is 0 if there is at least one non-zero bit when taking arg1 & arg2
         // calculate mid index for all 4 parallel searches
-        __m256i mid = _mm256_add_epi64(left, *result); 
+        __m256i mid = _mm256_add_epi64(left, right); 
         mid = _mm256_srli_epi64(mid, 1);
 
-        // gather the separate mid indices into one vector
-        __m256i gathered_mid = _mm256_i64gather_epi64((const long long *) data, mid, 1); // have to cast pointer to this type
-
         // compare target and mid
-        // cmpgt intrinsic returns 1 when gathered_mid > target
-        __m256i is_g = _mm256_cmpgt_epi64(gathered_mid, target);
-        // cmpeq intrinsic returns 1 when gathered_mid = target
-        __m256i is_e = _mm256_cmpeq_epi64(gathered_mid, target);
-        // combine both with bitwise OR operator, to get gathered_mid >= target
-        __m256i is_ge = _mm256_or_si256(is_g, is_e);
+        // cmpgt intrinsic returns 1 when gathered_mid >= target
+        __m256i is_ge = _mm256_cmpgt_epi64(mid, _mm256_sub_epi64(target, _mm256_set1_epi64x(1)));
+        // // cmpeq intrinsic returns 1 when gathered_mid = target
+        // __m256i is_e = _mm256_cmpeq_epi64(gathered_mid, target);
+        // // combine both with bitwise OR operator, to get gathered_mid >= target
+        // __m256i is_ge = _mm256_or_si256(is_g, is_e);
 
         // update right depending on is_ge using blend
         // if mask is 0, copy from 1st argument, if mask 1, copy from 2nd argument
-        *result = _mm256_blendv_epi8(gathered_mid, *result, is_ge);
+        right = _mm256_blendv_epi8(right, mid, is_ge);
         // update left depending on is_ge 
-        left = _mm256_blendv_epi8(left, _mm256_add_epi64(mid, _mm256_set1_epi64x(1)), is_ge);
+        left = _mm256_blendv_epi8(_mm256_add_epi64(mid, _mm256_set1_epi64x(1)), left,  is_ge);
 
         // update tracker
-        __m256i searching = _mm256_cmpgt_epi64(*result, left); // if right > left, search is ongoing
+        __m256i searching = _mm256_cmpgt_epi64(right, left); // if right > left, search is ongoing
         tracker = _mm256_and_si256(tracker, searching); // if not searching, it will be 0, so tracker will become 0 for that process
     }
-}
+    *result = right;
+ }
+
+// inline void low_bin_nb_simd(int64_t* data, int64_t size, __m256i target, __m256i* results) {
+//     __m256i left = _mm256_setzero_si256(); // Initialize left to 4 zeros
+//     __m256i right = *results; // Use the initial values in `results` as the right boundary
+//     __m256i tracker = _mm256_set1_epi64x(-1); // Tracker for ongoing searches
+
+//     while (!_mm256_testz_si256(tracker, tracker)) { 
+//         // Calculate mid index for all 4 parallel searches
+//         __m256i mid = _mm256_add_epi64(left, right); 
+//         mid = _mm256_srli_epi64(mid, 1); // mid = (left + right) / 2
+
+//         // Gather the values at the mid indices
+//         __m256i gathered_mid = _mm256_i64gather_epi64((const long long*)data, mid, 8); 
+
+//         // Compare gathered_mid and target
+//         __m256i is_ge = _mm256_cmpgt_epi64(gathered_mid, target); // gathered_mid >= target
+
+//         // Update right and left based on comparison
+//         right = _mm256_blendv_epi8(right, mid, is_ge); 
+//         left = _mm256_blendv_epi8(_mm256_add_epi64(mid, _mm256_set1_epi64x(1)), left, is_ge);
+
+//         // Update tracker to stop searches where left >= right
+//         __m256i searching = _mm256_cmpgt_epi64(right, left); 
+//         tracker = _mm256_and_si256(tracker, searching);
+//     }
+
+//     // Update results with the final right values
+//     *results = right;
+// }
+
 
 
 void bulk_bin_search(int64_t* data, int64_t size, int64_t* searchkeys, int64_t numsearches, int64_t* results, int repeats)
