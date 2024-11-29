@@ -95,7 +95,7 @@ inline int64_t low_bin_nb_arithmetic(int64_t* data, int64_t size, int64_t target
      (c) If the search key is bigger than all keys, it returns size.
   */
   int64_t left=0;
-  int64_t right=size-1;
+  int64_t right=size;
   int64_t mid;
 
   while(left<right) {
@@ -105,16 +105,16 @@ inline int64_t low_bin_nb_arithmetic(int64_t* data, int64_t size, int64_t target
 
     // Calculate whether the target is less than or equal to data[mid]
     // Comparison result is 1 if true, 0 if false
-    int64_t is_ge = (data[mid] >= target); // Check if target is greater than or equal to data[mid]
+    int64_t is_ge = (data[mid] >= target);
 
     // Update right or left based on is_ge without branching
 
     right = mid * is_ge + right * (1 - is_ge);  // If is_ge: right = mid; else: right = right
     left = left * is_ge + (mid + 1) * (1 - is_ge);  // If is_ge: left = left; else: left = mid + 1
   }
-	int64_t is_greater = (data[right] >= target); // Check if the value at 'right' is >= target to handle the final return value
-  return right * (is_greater) + (-1) * (1-is_greater); // Return right if is_greater, else return -1
+  return right;
 }
+
 
 inline int64_t low_bin_nb_mask(int64_t* data, int64_t size, int64_t target)
 {
@@ -127,7 +127,7 @@ inline int64_t low_bin_nb_mask(int64_t* data, int64_t size, int64_t target)
      (c) If the search key is bigger than all keys, it returns size.
   */
   int64_t left=0;
-  int64_t right=size-1;
+  int64_t right=size;
 
 
   /* YOUR CODE HERE */
@@ -137,11 +137,17 @@ inline int64_t low_bin_nb_mask(int64_t* data, int64_t size, int64_t target)
     mid = (left + right)>>1; // Bitwise shift to divide by 2
     int64_t is_ge = -(data[mid] >= target); // Check if target is greater than or equal to data[mid]
 
+    /* 
+    here -1 and 0 are used instead of 1 and 0. This is because -1 is represented by all 1s in binary (2's complement)
+    in previous function, we use * operator, and multiplying by 1 is how we keep result same as starting number
+    but when doing bitwise &, all the bits have to be 1 to get the result to be the same as starting number (left/right) 
+    0 is all 0s in binary, so bitwise & with 0 will always result in 0, like in previous function
+    */
+
     right = (right & ~is_ge) | (mid & is_ge); // If is_ge: right = mid, else: right = right
     left = (left & is_ge) | ((mid+1) & ~is_ge); // If is_ge: left = left, else: left = mid + 1
   }
-	int64_t is_greater = -(data[right] >= target); // Check if the value at 'right' is >= target to handle the final return value
-    return (right & is_greater) | (-1 & (~is_greater)); // Return right if is_greater, else return -1
+  return right; // Return right
 }
 
 inline void low_bin_nb_4x(int64_t* data, int64_t size, int64_t* targets, int64_t* right)
@@ -160,7 +166,26 @@ inline void low_bin_nb_4x(int64_t* data, int64_t size, int64_t* targets, int64_t
 
     /* YOUR CODE HERE */
 
+    int64_t left[] = {0,0,0,0};
+    int64_t mid[4];
+    int tracker = 0b0000; // 1 = completed, 0 = ongoing
+    // use 4 bits to track each of the 4 searches' completions
+    // more optimal than using another 4 integer array
+    while( tracker != 0b1111){
+        for(int i=0; i<4; i++){
+            if (tracker & (1<<i)){
+                continue; // skip completed search
+            }
+            mid[i] = (right[i] + left[i])>>1;
+            int64_t is_ge = -(data[mid[i]] >= targets[i]);
 
+            right[i] = (right[i] & ~is_ge) | (mid[i] & is_ge);
+            left[i] = (left[i]& is_ge) | ((mid[i]+1) & ~is_ge); 
+            if(left[i]>= right[i]){
+                tracker |= (1<<i);
+            }
+        }
+    }
 }
 
 
@@ -214,10 +239,38 @@ inline void low_bin_nb_simd(int64_t* data, int64_t size, __m256i target, __m256i
 
 
  /* YOUR CODE HERE */
+    // use the __m256i data type because intrinsics take these
+    __m256i left = _mm256_setzero_si256(); // initialize left to 4 0's
+    __m256i tracker = _mm256_set1_epi64x(-1); // initialize tracker to 4 -1's (all 1s in binary), 0 for completed
 
+    while (!_mm256_testz_si256(tracker, tracker)) { // testz is 0 if there is at least one non-zero bit when taking arg1 & arg2
+        // calculate mid index for all 4 parallel searches
+        __m256i mid = _mm256_add_epi64(left, *result); 
+        mid = _mm256_srli_epi64(mid, 1);
 
+        // gather the separate mid indices into one vector
+        __m256i gathered_mid = _mm256_i64gather_epi64((const long long *) data, mid, 1); // have to cast pointer to this type
 
+        // compare target and mid
+        // cmpgt intrinsic returns 1 when gathered_mid > target
+        __m256i is_g = _mm256_cmpgt_epi64(gathered_mid, target);
+        // cmpeq intrinsic returns 1 when gathered_mid = target
+        __m256i is_e = _mm256_cmpeq_epi64(gathered_mid, target);
+        // combine both with bitwise OR operator, to get gathered_mid >= target
+        __m256i is_ge = _mm256_or_si256(is_g, is_e);
+
+        // update right depending on is_ge using blend
+        // if mask is 0, copy from 1st argument, if mask 1, copy from 2nd argument
+        *result = _mm256_blendv_epi8(gathered_mid, *result, is_ge);
+        // update left depending on is_ge 
+        left = _mm256_blendv_epi8(left, _mm256_add_epi64(mid, _mm256_set1_epi64x(1)), is_ge);
+
+        // update tracker
+        __m256i searching = _mm256_cmpgt_epi64(*result, left); // if right > left, search is ongoing
+        tracker = _mm256_and_si256(tracker, searching); // if not searching, it will be 0, so tracker will become 0 for that process
+    }
 }
+
 
 void bulk_bin_search(int64_t* data, int64_t size, int64_t* searchkeys, int64_t numsearches, int64_t* results, int repeats)
 {
@@ -235,9 +288,9 @@ void bulk_bin_search(int64_t* data, int64_t size, int64_t* searchkeys, int64_t n
 #endif
 
       // Uncomment one of the following to measure it
-      results[i] = low_bin_search(data,size,searchkeys[i]);
-      //results[i] = low_bin_nb_arithmetic(data,size,searchkeys[i]);
-      //results[i] = low_bin_nb_mask(data,size,searchkeys[i]);
+      // results[i] = low_bin_search(data,size,searchkeys[i]);
+      // results[i] = low_bin_nb_arithmetic(data,size,searchkeys[i]);
+      results[i] = low_bin_nb_mask(data,size,searchkeys[i]);
 
 #ifdef DEBUG
       printf("Result is %ld\n",results[i]);
@@ -268,11 +321,11 @@ void bulk_bin_search_4x(int64_t* data, int64_t size, int64_t* searchkeys, int64_
       // Uncomment one of the following depending on which routine you want to profile
 
       // Algorithm A
-       low_bin_nb_4x(data,size,&searchkeys[i],&results[i]);
+      //  low_bin_nb_4x(data,size,&searchkeys[i],&results[i]);
 
       // Algorithm B
-      // searchkey_4x = _mm256_loadu_si256((__m256i *)&searchkeys[i]);
-      // low_bin_nb_simd(data,size,searchkey_4x,(__m256i *)&results[i]);
+      searchkey_4x = _mm256_loadu_si256((__m256i *)&searchkeys[i]);
+      low_bin_nb_simd(data,size,searchkey_4x,(__m256i *)&results[i]);
 
 #ifdef DEBUG
       printf("Result is %ld %ld %ld %ld  ...\n",
@@ -303,8 +356,52 @@ int64_t band_join(int64_t* inner, int64_t inner_size, int64_t* outer, int64_t ou
 
   */
 
-      /* YOUR CODE HERE */
+    /* YOUR CODE HERE */
+    int64_t count = 0;
+    // declare these arrays with fixed size 4 outside of the loop
+    int64_t lower_bounds[4];
+    int64_t upper_bounds[4];
+    int64_t left[4];
+    int64_t right[4]; 
+    for (int64_t i=0; i < outer_size; i += 4) { // iterate 4 at a time
+        // get batch size, which is 4, or less if this is the last batch
+        int64_t batch_size = (outer_size - i > 4) ? 4 : (outer_size - i);
+        
+        for (int64_t j=0; j < batch_size; j++) {
+            lower_bounds[j] = outer[i+j] - bound;
+            upper_bounds[j] = outer[i+j] + bound + 1;
+            // the +1 is because both linear search functions look for >= but we want > here
+            // >= n+1 is the same as > n
+            left[j] = inner_size; // default to the end of the inner array 
+            right[j] = inner_size; 
+        }
 
+        if(batch_size == 4) {
+            low_bin_nb_4x(inner, inner_size, lower_bounds, left);
+            low_bin_nb_4x(inner, inner_size, upper_bounds, right);
+        } else {
+            for( int64_t j = 0; j < batch_size; j++) {
+                left[j] = low_bin_nb_mask(inner, inner_size, lower_bounds[j]);
+                right[j] = low_bin_nb_mask(inner, inner_size, upper_bounds[j]);
+            } 
+        }
+
+        // now each left[j] is the index of the first record in inner that is >= lower_bounds[j]
+        // and each right[j] is the index of the first record in inner that is > upper_bounds[j]
+        for (int64_t j=0; j < batch_size; j++) {
+            // add each index that is >= lower bound and <= upper_bound to results
+            // this means from left[j] to right[j] - 1
+            for (int64_t k=left[j]; k < right[j]; k++) {
+                if(count >= result_size) {
+                    return count; // exit early
+                }
+                outer_results[count] = i + j; // index in the outer table is given by i + j
+                inner_results[count] = k; // index in the inner table is given by k
+                count++;
+            }
+        }
+    }
+    return count;
 }
 
 int64_t band_join_simd(int64_t* inner, int64_t inner_size, int64_t* outer, int64_t outer_size, int64_t* inner_results, int64_t* outer_results, int64_t result_size, int64_t bound)
@@ -326,8 +423,59 @@ int64_t band_join_simd(int64_t* inner, int64_t inner_size, int64_t* outer, int64
      This inner scanning code does not have to use SIMD.
   */
 
-      /* YOUR CODE HERE */
+    /* YOUR CODE HERE */
+    int64_t count = 0;
+    // declare these arrays with fixed size 4 outside of the loop
+    int64_t lower_bounds[4];
+    int64_t upper_bounds[4];
+    int64_t left[4];
+    int64_t right[4]; 
+    for (int64_t i=0; i < outer_size; i += 4) { // iterate 4 at a time
+        // get batch size, which is 4, or less if this is the last batch
+        int64_t batch_size = (outer_size - i > 4) ? 4 : (outer_size - i);
+        
+        for (int64_t j=0; j < batch_size; j++) {
+            lower_bounds[j] = outer[i+j] - bound;
+            upper_bounds[j] = outer[i+j] + bound + 1;
+            // the +1 is because both linear search functions look for >= but we want > here
+            // >= n+1 is the same as > n
+            left[j] = inner_size;
+            right[j] = inner_size;
+        }
 
+        if(batch_size == 4) {
+            // have to convert the bound arrays to vectors for the low_bin_nb_simd function
+            __m256i lower_vector = _mm256_loadu_si256((__m256i*)lower_bounds);
+            __m256i upper_vector = _mm256_loadu_si256((__m256i*)upper_bounds);
+            __m256i left_vector = _mm256_loadu_si256((__m256i*)left);
+            __m256i right_vector = _mm256_loadu_si256((__m256i*)right);
+
+            low_bin_nb_simd(inner, inner_size, lower_vector, &left_vector);
+            low_bin_nb_simd(inner, inner_size, upper_vector, &right_vector);
+
+            // store the results back in the left and right arrays
+            _mm256_storeu_si256((__m256i*)left, left_vector);
+            _mm256_storeu_si256((__m256i*)right, right_vector);
+        } else { 
+            // no need for vectors, same as band_join
+            for( int64_t j = 0; j < batch_size; j++) {
+                left[j] = low_bin_nb_mask(inner, inner_size, lower_bounds[j]);
+                right[j] = low_bin_nb_mask(inner, inner_size, upper_bounds[j]);
+            } 
+        }
+
+        for (int64_t j=0; j < batch_size; j++) {
+            for (int64_t k=left[j]; k < right[j]; k ++) {
+                if(count >= result_size){
+                    return count; // exit early
+                }
+                outer_results[count] = i + j;
+                inner_results[count] = k;
+                count++;
+            }
+        }
+    } 
+    return count;
 }
 
 int
