@@ -1,0 +1,136 @@
+5242 project
+
+low_bin_search:
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 10 0 0 0 10
+Time in bulk_bin_search loop is 1 microseconds or 0.010000 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 100 0 0 0 10
+Time in bulk_bin_search loop is 14 microseconds or 0.014000 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 1000 0 0 0 10
+Time in bulk_bin_search loop is 409 microseconds or 0.040900 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 10000 0 0 0 10
+Time in bulk_bin_search loop is 6185 microseconds or 0.061850 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 100000 0 0 0 10
+Time in bulk_bin_search loop is 85051 microseconds or 0.085051 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 1000000 0 0 0 10
+Time in bulk_bin_search loop is 1469123 microseconds or 0.146912 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 10000000 0 0 0 10
+Time in bulk_bin_search loop is 40896920 microseconds or 0.408969 microseconds per search
+
+
+low_bin_nb_arithmetic:
+
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 10 0 0 0 10
+Time in bulk_bin_search loop is 1 microseconds or 0.010000 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 100 0 0 0 10
+Time in bulk_bin_search loop is 24 microseconds or 0.024000 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 1000 0 0 0 10
+Time in bulk_bin_search loop is 352 microseconds or 0.035200 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 10000 0 0 0 10
+Time in bulk_bin_search loop is 5620 microseconds or 0.056200 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 100000 0 0 0 10
+Time in bulk_bin_search loop is 85217 microseconds or 0.085217 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 1000000 0 0 0 10
+Time in bulk_bin_search loop is 1662548 microseconds or 0.166255 microseconds per search
+~/cse5242/5242Project2 # gcc -O3 -mavx2 -o db5242 db5242.c &&  ./db5242 10000000 0 0 0 10
+Time in bulk_bin_search loop is 50447128 microseconds or 0.504471 microseconds per search
+
+low_bin_nb_mask:
+~/cse5242/5242Project2 # ./db5242 10 0 0 0 10
+Time in bulk_bin_search loop is 3 microseconds or 0.030000 microseconds per search
+~/cse5242/5242Project2 # ./db5242 100 0 0 0 10
+Time in bulk_bin_search loop is 47 microseconds or 0.047000 microseconds per search
+~/cse5242/5242Project2 # ./db5242 1000 0 0 0 10
+Time in bulk_bin_search loop is 696 microseconds or 0.069600 microseconds per search
+~/cse5242/5242Project2 # ./db5242 10000 0 0 0 10
+Time in bulk_bin_search loop is 8886 microseconds or 0.088860 microseconds per search
+~/cse5242/5242Project2 # ./db5242 100000 0 0 0 10
+Time in bulk_bin_search loop is 72581 microseconds or 0.072581 microseconds per search
+~/cse5242/5242Project2 # ./db5242 1000000 0 0 0 10
+Time in bulk_bin_search loop is 1945142 microseconds or 0.194514 microseconds per search
+~/cse5242/5242Project2 # ./db5242 10000000 0 0 0 10
+Time in bulk_bin_search loop is 47995484 microseconds or 0.479955 microseconds per search
+
+
+low_bin_nb_4x:
+
+~/cse5242/5242Project2 # ./db5242 10 0 0 0 10
+Time in bulk_bin_search_4x loop is 1 microseconds or 0.010000 microseconds per search
+~/cse5242/5242Project2 # ./db5242 100 0 0 0 10
+Time in bulk_bin_search_4x loop is 4 microseconds or 0.004000 microseconds per search
+~/cse5242/5242Project2 # ./db5242 1000 0 0 0 10
+Time in bulk_bin_search_4x loop is 29 microseconds or 0.002900 microseconds per search
+~/cse5242/5242Project2 # ./db5242 10000 0 0 0 10
+Time in bulk_bin_search_4x loop is 409 microseconds or 0.004090 microseconds per search
+~/cse5242/5242Project2 # ./db5242 100000 0 0 0 10
+Time in bulk_bin_search_4x loop is 1648 microseconds or 0.001648 microseconds per search
+~/cse5242/5242Project2 # ./db5242 1000000 0 0 0 10
+Time in bulk_bin_search_4x loop is 19197 microseconds or 0.001920 microseconds per search
+~/cse5242/5242Project2 # ./db5242 10000000 0 0 0 10
+Time in bulk_bin_search_4x loop is 201407 microseconds or 0.002014 microseconds per search
+
+
+
+low_bin_nb_simd:
+
+~/cse5242/5242Project2 # ./db5242 10 0 0 0 10
+Time in bulk_bin_search_4x loop is 2 microseconds or 0.020000 microseconds per search
+~/cse5242/5242Project2 # ./db5242 100 0 0 0 10
+Time in bulk_bin_search_4x loop is 2 microseconds or 0.002000 microseconds per search
+~/cse5242/5242Project2 # ./db5242 1000 0 0 0 10
+Time in bulk_bin_search_4x loop is 10 microseconds or 0.001000 microseconds per search
+~/cse5242/5242Project2 # ./db5242 10000 0 0 0 10
+Time in bulk_bin_search_4x loop is 146 microseconds or 0.001460 microseconds per search
+~/cse5242/5242Project2 # ./db5242 100000 0 0 0 10
+Time in bulk_bin_search_4x loop is 791 microseconds or 0.000791 microseconds per search
+~/cse5242/5242Project2 # ./db5242 1000000 0 0 0 10
+Time in bulk_bin_search_4x loop is 15505 microseconds or 0.001551 microseconds per search
+~/cse5242/5242Project2 # ./db5242 10000000 0 0 0 10
+Time in bulk_bin_search_4x loop is 154400 microseconds or 0.001544 microseconds per search
+
+
+CPU information:
+
+~/cse5242/5242Project2 # lscpu
+Architecture:            x86_64
+  CPU op-mode(s):        32-bit, 64-bit
+  Address sizes:         39 bits physical, 48 bits virtual
+  Byte Order:            Little Endian
+CPU(s):                  12
+  On-line CPU(s) list:   0-11
+Vendor ID:               GenuineIntel
+  Model name:            13th Gen Intel(R) Core(TM) i5-13420H
+    CPU family:          6
+    Model:               186
+    Thread(s) per core:  2
+    Core(s) per socket:  6
+    Socket(s):           1
+    Stepping:            2
+    BogoMIPS:            5222.40
+    Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant
+                         _tsc rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid pni pclmulqdq vmx ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_t
+                         imer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi ept vpid ept_ad fsgsba
+                         se tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves avx_vnni umip waitpkg gf
+                         ni vaes vpclmulqdq rdpid movdiri movdir64b fsrm md_clear serialize flush_l1d arch_capabilities
+Virtualization features: 
+  Virtualization:        VT-x
+  Hypervisor vendor:     Microsoft
+  Virtualization type:   full
+Caches (sum of all):     
+  L1d:                   288 KiB (6 instances)
+  L1i:                   192 KiB (6 instances)
+  L2:                    7.5 MiB (6 instances)
+  L3:                    12 MiB (1 instance)
+Vulnerabilities:         
+  Gather data sampling:  Not affected
+  Itlb multihit:         Not affected
+  L1tf:                  Not affected
+  Mds:                   Not affected
+  Meltdown:              Not affected
+  Mmio stale data:       Not affected
+  Retbleed:              Mitigation; Enhanced IBRS
+  Spec rstack overflow:  Not affected
+  Spec store bypass:     Mitigation; Speculative Store Bypass disabled via prctl and seccomp
+  Spectre v1:            Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+  Spectre v2:            Mitigation; Enhanced IBRS, IBPB conditional, RSB filling, PBRSB-eIBRS SW sequence
+  Srbds:                 Not affected
+  Tsx async abort:       Not affected

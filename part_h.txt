@@ -1,0 +1,36 @@
+band_join:
+
+N = 10,000
+X = 100,000
+Y = 1,000,000
+Z = [10, 1000, 100000, 10000000]
+
+~/cse5242/5242Project2 # ./db5242 10000 100000 10000000 10
+Band join result size is 12 with an average of 0.000122 matches per output record
+Time in band_join loop is 4518 microseconds or 0.045180 microseconds per outer record
+~/cse5242/5242Project2 # ./db5242 10000 100000 10000000 1000
+Band join result size is 993 with an average of 0.009937 matches per output record
+Time in band_join loop is 9140 microseconds or 0.091400 microseconds per outer record
+~/cse5242/5242Project2 # ./db5242 10000 100000 10000000 100000
+Band join result size is 92880 with an average of 0.928800 matches per output record
+Time in band_join loop is 11749 microseconds or 0.117490 microseconds per outer record
+~/cse5242/5242Project2 # ./db5242 10000 100000 10000000 10000000
+Band join result size is 9291223 with an average of 92.912230 matches per output record
+Time in band_join loop is 95359 microseconds or 0.953590 microseconds per outer record
+
+band_join_simd:
+
+Same values for N, X, Y and Z:
+
+~/cse5242/5242Project2 # ./db5242 10000 100000 10000000 10
+Band join result size is 0 with an average of 0.000000 matches per output record
+Time in band_join loop is 3283 microseconds or 0.032830 microseconds per outer record
+~/cse5242/5242Project2 # ./db5242 10000 100000 10000000 1000
+Band join result size is 0 with an average of 0.000000 matches per output record
+Time in band_join loop is 1956 microseconds or 0.019560 microseconds per outer record
+~/cse5242/5242Project2 # ./db5242 10000 100000 10000000 100000
+Band join result size is 60000 with an average of 0.655308 matches per output record
+Time in band_join loop is 1661 microseconds or 0.016610 microseconds per outer record
+~/cse5242/5242Project2 # ./db5242 10000 100000 10000000 10000000
+Band join result size is 4510000 with an average of 45.396896 matches per output record
+Time in band_join loop is 44874 microseconds or 0.448740 microseconds per outer record
