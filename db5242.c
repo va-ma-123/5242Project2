@@ -317,9 +317,9 @@ void bulk_bin_search(int64_t* data, int64_t size, int64_t* searchkeys, int64_t n
 #endif
 
       // Uncomment one of the following to measure it
-      // results[i] = low_bin_search(data,size,searchkeys[i]);
+      results[i] = low_bin_search(data,size,searchkeys[i]);
       // results[i] = low_bin_nb_arithmetic(data,size,searchkeys[i]);
-      results[i] = low_bin_nb_mask(data,size,searchkeys[i]);
+      // results[i] = low_bin_nb_mask(data,size,searchkeys[i]);
 
 #ifdef DEBUG
       printf("Result is %ld\n",results[i]);
@@ -349,12 +349,12 @@ void bulk_bin_search_4x(int64_t* data, int64_t size, int64_t* searchkeys, int64_
 
       // Uncomment one of the following depending on which routine you want to profile
 
-      // Algorithm A
-      // low_bin_nb_4x(data,size,&searchkeys[i],&results[i]);
+      // Algorithm low_bin_nb_4x
+      low_bin_nb_4x(data,size,&searchkeys[i],&results[i]);
 
-      // Algorithm B
-      searchkey_4x = _mm256_loadu_si256((__m256i *)&searchkeys[i]);
-      low_bin_nb_simd(data,size,searchkey_4x,(__m256i *)&results[i]);
+      // Algorithm low_bin_nb_simd
+      // searchkey_4x = _mm256_loadu_si256((__m256i *)&searchkeys[i]);
+      // low_bin_nb_simd(data,size,searchkey_4x,(__m256i *)&results[i]);
 
 #ifdef DEBUG
       printf("Result is %ld %ld %ld %ld  ...\n",
@@ -604,13 +604,13 @@ main(int argc, char *argv[])
 
 	   /* now measure... */
 
-	  //  gettimeofday(&before,NULL);
+	   gettimeofday(&before,NULL);
 
-	  //  /* the code that you want to measure goes here; make a function call */
-	  //  bulk_bin_search(data,arraysize,queries,arraysize,results, repeats);
+	   /* the code that you want to measure goes here; make a function call */
+	   bulk_bin_search(data,arraysize,queries,arraysize,results, repeats);
 
-	  //  gettimeofday(&after,NULL);
-	  //  printf("Time in bulk_bin_search loop is %ld microseconds or %f microseconds per search\n", (after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec), 1.0*((after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec))/arraysize/repeats);
+	   gettimeofday(&after,NULL);
+	   printf("Time in bulk_bin_search loop is %ld microseconds or %f microseconds per search\n", (after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec), 1.0*((after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec))/arraysize/repeats);
 
 
 
@@ -623,15 +623,15 @@ main(int argc, char *argv[])
 	  //  printf("Time in bulk_bin_search_4x loop is %ld microseconds or %f microseconds per search\n", (after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec), 1.0*((after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec))/arraysize/repeats);
 
 
-	   gettimeofday(&before,NULL);
+	  //  gettimeofday(&before,NULL);
 
-	   /* the code that you want to measure goes here; make a function call */
-     // comment out the one not being used
+	  //  /* the code that you want to measure goes here; make a function call */
+    //  // comment out the one not being used
 	  //  total_results=band_join(data, arraysize, outer, outer_size, inner_results, outer_results, result_size, bound);
-     total_results=band_join_simd(data, arraysize, outer, outer_size, inner_results, outer_results, result_size, bound);
-	   gettimeofday(&after,NULL);
-	   printf("Band join result size is %ld with an average of %f matches per output record\n",total_results, 1.0*total_results/(1.0+outer_results[total_results-1]));
-	   printf("Time in band_join loop is %ld microseconds or %f microseconds per outer record\n", (after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec), 1.0*((after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec))/outer_size);
+    //  total_results=band_join_simd(data, arraysize, outer, outer_size, inner_results, outer_results, result_size, bound);
+	  //  gettimeofday(&after,NULL);
+	  //  printf("Band join result size is %ld with an average of %f matches per output record\n",total_results, 1.0*total_results/(1.0+outer_results[total_results-1]));
+	  //  printf("Time in band_join loop is %ld microseconds or %f microseconds per outer record\n", (after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec), 1.0*((after.tv_sec-before.tv_sec)*1000000+(after.tv_usec-before.tv_usec))/outer_size);
 
 #ifdef DEBUG
 	   /* show the band_join results */
